@@ -14,6 +14,7 @@ void CMatMult2x2(int Aidx, double complex *A, int Bidx, double complex *B, int C
 void TransferMatrix(double thetaI, double k0, double complex *rind, double *d,
 double complex *cosL, double *beta, double *alpha, double complex *m11, double complex *m21);
 double SpectralEfficiency(double *emissivity, int N, double *lambda, double lambdabg, double Temperature, double *P);
+double SpectralEfficiency_ABS(double *emissivity, int N, double *lambda, double lbg, double T, double *P);
 void Bruggenman(double f, double epsD, double complex epsM, double *eta, double *kappa);
 void MaxwellGarnett(double f, double epsD, double complex epsM, double *eta, double *kappa);
 void Lorentz(double we, double de, double w, double *epsr, double *epsi);
@@ -284,7 +285,7 @@ int main(int argc, char* argv[]) {
  
          }
    
-         double SE = SpectralEfficiency(Emiss, NumLam, LamList, lbg, Temp, &PU);
+         double SE = SpectralEfficiency_ABS(Emiss, NumLam, LamList, lbg, Temp, &PU);
          printf("  %f  %f  %f    %8.6f    %8.6f    %8.6f %f    %i     %12.10f  %12.10e\n",
                  dalloy,fac1, fac2, d1*fac1, d2*fac2, vf1,  Temp, Nlayer, SE,     PU);
          SEA[TK*numVf*numFac*numFac+F1*numFac*numFac+F2*numFac+NI] = SE;
@@ -537,6 +538,7 @@ void CMatMult2x2(int Aidx, double complex *A, int Bidx, double complex *B, int C
 
 }
 
+
 double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg, double T, double *P){
     int i;
     double dlambda, sumD, sumN;
@@ -544,15 +546,16 @@ double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg,
     double h = 6.626e-34;
     double kb = 1.38064852e-23;
     double rho;
+   
 
-    sumD = 0;
-    sumN = 0;
+    sumD = 0.;
+    sumN = 0.;
 
     for (i=1; i<N-1; i++) {
 
       em = emissivity[i];
       l = lambda[i];
-      rho = (4*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T))-1));
+      rho = (2*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T))-1));
 
       dlambda = fabs((lambda[i+1]- lambda[i-1])/(2));
       sumD += em*rho*dlambda;
@@ -567,6 +570,45 @@ double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg,
     *P = sumN;
  
     return sumN/sumD;
+
+}
+
+double SpectralEfficiency_ABS(double *emissivity, int N, double *lambda, double lbg, double T, double *P){
+    int i;
+    double dlambda, sumD, sumN;
+    double l, em;
+    double h = 6.626e-34;
+    double kb = 1.38064852e-23;
+
+    double Fac = 0.0094810400;
+    double rho1, rho2;
+
+    double solar = 0.;
+    double absorber = 0.;
+    double emitter = 0.;
+
+    double T1 = 5780;
+    double T2 = 1073;
+
+    for (i=1; i<N-1; i++) {
+
+      em = emissivity[i];
+      l = lambda[i];
+      rho1 = Fac*(2*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T1))-1));
+      rho2 =     (2*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T2))-1));
+
+      dlambda = fabs((lambda[i+1]- lambda[i-1])/(2));
+
+      absorber += em*rho1*dlambda;
+      emitter  += em*rho2*dlambda;
+      solar    += rho1*dlambda;
+
+    }
+
+    // should be absorbed power in W/cm^2
+    *P = absorber/(100.*100.);;
+
+    return (absorber - emitter)/solar;
 
 }
 
