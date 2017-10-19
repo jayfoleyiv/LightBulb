@@ -2,8 +2,8 @@
 #include<stdlib.h>
 #include<math.h>
 #include<string.h>
-#include</usr/include/malloc/malloc.h>
-#include</usr/include/complex.h>
+#include<malloc.h>
+#include<complex.h>
 
 // Function Prototypes
 int *VEC_INT(int dim);
