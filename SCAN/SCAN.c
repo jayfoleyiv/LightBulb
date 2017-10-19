@@ -29,7 +29,9 @@ double pi=3.141592653589793;
 
 int main(int argc, char* argv[]) {
   // integer variables
-  int i, j, k, F1, F2, TK, NI, NV;
+  int i, j, k, l, F1, F2, TK, NI, NV;
+  int Nmin, Nmax;
+
   // complex double precision variables
   double complex m11, m21, r, t, st, cosL;
   double complex *rind; 
@@ -49,7 +51,13 @@ int main(int argc, char* argv[]) {
   double eta, kappa;
   double we, de, w;
   double dalloy, d1, d2, d3, d4, vf1, vf2, epsbg, fac1, fac2;
-
+  // These variables define the ranges of d1 and d2
+  double d1min, d1max, d2min, d2max;
+  int dnum;
+  // These variables define the ranges of volume fraction for the alloy
+  double vfmin, vfmax;
+  int vfnum;
+  
   // Lists for spectral efficiency
   double *LamList, *Emiss, *clam;
   // Variables for Spectral Efficiency
@@ -99,101 +107,118 @@ int main(int argc, char* argv[]) {
   // Alumina ata - refractive index from ALD sample
   CheckNum = ReadDielectric(alumina_ald_file, clam, alumina_ald);  
 
-  //  Did we pass a filename to the program?
-  if (argc==1) {
-    exit(0);
-  }
 
-  strcpy(write,argv[1]);
-
-  // initialize variables to be read
+  // These are variables that the user will define ranges for at run time
   Nlayer=0;
   d1=0.0;
   d2=0.0;
+  vf1=0.0;
+
+  printf("  PLEASE ENTER THE MINIMUM NUMBER OF LAYERS YOU WISH TO CONSIDER!\n");
+   printf("  NOTE:  MINUMUM SHOULD BE AT LEAST 6\n");
+  scanf("%i",&Nmin);
+
+  if (Nmin<6) Nmin=6;
+
+  printf("  PLEASE ENTER THE MAXIMUM NUMBER OF LAYERS YOU WISH TO CONSIDER!\n");
+  printf("  NOTE:  MAX SHOULD BE AT LEAST %i\n",Nmin+1);
+  scanf("%i",&Nmax);
+  
+  if (Nmax==Nmin) Nmax = Nmin+1;
+
+  printf("  Nmin is %i\n",Nmin);
+  printf("  Nmax is %i\n",Nmax);
+
+  int Ncount = Nmax - Nmin;
+
+  printf("  PLEASE ENTER THE MINIMUM THICKNESS OF MgO LAYERS YOU WISH TO CONSIDER!\n");
+  printf("  NOTE:  MINUMUM SHOULD BE AT LEAST 50 nm \n"); 
+  scanf("%lf",&d1min);
+  printf("  PLEASE ENTER THE MAXIMUM THICKNESS OF MgO LAYERS YOU WISH TO CONSIDER!\n");
+  printf("  NOTE:  MAXIMUM SHOULD BE LESS THAN 1000 nm \n");
+  scanf("%lf",&d1max);
+
+  printf("  HOW MANY DIFFERENT THICKNESSES WOULD YOU LIKE TO CONSIDER?\n");
+  printf("  NOTE:  SHOULD BE BETWEEN 20 and 50\n");
+  scanf("%i",&dnum);
+
+  printf("  WHAT IS THE MINIMUM VOLUME FRACTION YOU WISH TO CONSIDER?\n");
+  printf("  NOTE MIN SHOULD BE AT LEAST 0\n");
+  scanf("%lf",&vfmin);
+  if (vfmin<0) vfmin=0.;
+  else if (vfmin>1) vfmin=0.;
+
+  printf("  WHAT IS THE MAXIMUM VOLUME FRACTION YOU WISH TO CONSIDER\n");
+  printf("  NOTE MAX SHOULD BE AT MOST 1\n");
+  scanf("%lf",&vfmax);
+  if (vfmax>1.) vfmax=1;
+  else if (vfmax<0.) vfmax=1;
+
+  printf("  d1min is %f\n",d1min);
+  printf("  d1max is %f\n",d1max);
+  printf("  vfmin is %f\n",vfmin);
+  printf("  vfmax is %f\n",vfmax);
+
+  d1min /=1000;
+  d1max /=1000;
+
+  printf("  Number of variations for each is %i\n",dnum);
+  printf("  Total number of structures that will be searched is %i\n",dnum*dnum*dnum*Ncount);
+
+  int size = dnum*dnum*dnum*Ncount;
+
+  // These are variables that don't change
   nlow=1.75;
   nhi=2.21;
-  vf1=0.0;
-  vf2=0.0;
-  epsbg=0.0;
-  d3=0.0;
-  d4=0.0;
-  lbg=0.0;
-  Temp=0.0;
-  // Open the file for writing!
-  fp = fopen(write,"r");
-  printf("  going to read from file %s\n",write);
-  fflush(stdout);
- 
+  vf2 = 1.0;
+  epsbg=3.097;;
+  lbg=2254.0;
+  dalloy = 0.02;
+  Temp=1073.0;
+
   
-    fscanf(fp,"%s",line);  // Nlayer
-    fscanf(fp,"%i",&Nlayer);
-    fscanf(fp,"%s",line);   // dalloy
-    fscanf(fp,"%lf",&dalloy);
-    fscanf(fp,"%s",line);   //  d1
-    fscanf(fp,"%lf",&d1);
-    fscanf(fp,"%s",line);  // d2
-    fscanf(fp,"%lf",&d2);
-    fscanf(fp,"%s",line);  // d3 (spacer)
-    fscanf(fp,"%lf",&d3);
-    fscanf(fp,"%s",line);  // d4 (W/alloy underlayer)
-    fscanf(fp,"%lf",&d4);
-    fscanf(fp,"%s",line);  // volume fraction 1
-    fscanf(fp,"%lf",&vf1); 
-    fscanf(fp,"%s",line);  // volume fraction 2
-    fscanf(fp,"%lf",&vf2); 
-    fscanf(fp,"%s",line);  // epsbg
-    fscanf(fp,"%lf",&epsbg);
-    fscanf(fp,"%s",line);  // Temp
-    fscanf(fp,"%lf",&Temp);  
-    fscanf(fp,"%s",line);  //Lambda bg
-    fscanf(fp,"%lf",&lbg);
 
   polflag=1;
 
   int numVf, numNlayers, numFac, *NLa, *PF, numT;
   double *VFa, *SEA, *SFAC, *SDA, *Tem;
-  
-  numNlayers=20;
-  numFac=20;
-  numVf = 20;
 
-  NLa = (int*)malloc((numNlayers*sizeof(int)));
-  SEA = (double*)malloc((numFac*numVf*numNlayers*numFac*sizeof(double)));
-  SDA = (double*)malloc((numFac*numVf*numNlayers*numFac*sizeof(double)));
-  PF  = (int*)malloc((numFac*numVf*numNlayers*numFac*sizeof(int)));
-  SFAC= (double*)malloc((numFac*sizeof(double)));
-  VFa = (double*)malloc((numVf*sizeof(double)));
+  NLa = (int*)malloc((size*sizeof(int)));
+  SEA = (double*)malloc((size*sizeof(double)));
+  SDA = (double*)malloc((size*sizeof(double)));
+  PF  = (int*)malloc((size*sizeof(int)));
+  SFAC= (double*)malloc((size*sizeof(double)));
+  VFa = (double*)malloc((size*sizeof(double)));
 
   d = VEC_DOUBLE(1000);
   rind = VEC_CDOUBLE(1000);
  
 
 
-  for (TK=0; TK<numVf; TK++) {
+  for (i=0; i<dnum; i++) {
 
-    vf1 = 0. + (1./20)*TK;
+    vf1 = vfmin + i*(vfmax-vfmin)/(dnum-1);
     VFa[TK] = vf1;
   
     // Loop over different factors to multiply d1 by
-    for (F1=0; F1<numFac; F1++) {
+    for (j=0; j<dnum; j++) {
 
-      fac1 = 0.6 + (1./20)*F1;   
+      fac1 = d1min + j*(d1max-d1min)/(dnum-1);   
       SFAC[F1] = fac1;
 
       // Loop over different factors to multiply d2 by
-      for (F2=0; F2<numFac; F2++) {
+      for (k=0; k<dnum; k++) {
 
-        fac2 = 0.6 + (1./20)*F2;
+        fac2 =  d1min + k*(d1max-d1min)/(dnum-1);
 
         //  Loop over different number of layers
         //for (NI=0; NI<numNlayers; NI++) { 
-        for (NI=0; NI<1; NI++) {
+        for (l=Nmin; l<=Nmax;l++) {
 
-          Nlayer = 9;
-          //Nlayer = 5 + NI;
+          Nlayer = l;
 
-          // NLa vector stores the value of Nlayer_i for layter use
-          NLa[NI] = Nlayer;
+          NLa[l] = Nlayer;
+
 
           // Vector to store the thicknesses in micrometers of each layer
           d[0] = 0.;
@@ -206,15 +231,15 @@ int main(int argc, char* argv[]) {
           rind[1] = 1.00 + 0.*I;
 
           // Now start the Bragg Reflector
-          for (i=2; i<Nlayer-2; i++) {
+          for (int ii=2; ii<Nlayer-2; ii++) {
 
-            if (i%2==0) {
-              d[i] = d1*fac1;
-              rind[i] = nlow + 0.*I;
+            if (ii%2==0) {
+              d[ii] = fac1;
+              rind[ii] = nlow + 0.*I;
             }
             else {
-              d[i] = d2*fac2;
-              rind[i] = nhi + 0.*I;
+              d[ii] = fac2;
+              rind[ii] = nhi + 0.*I;
             }
           }
 
@@ -237,15 +262,15 @@ int main(int argc, char* argv[]) {
          // Normal incidence
          thetaI = 0;
  
-         for (i=0; i<NumLam; i++) {
+         for (int ii=0; ii<NumLam; ii++) {
  
-           lambda = LamList[i];    // Lambda in meters
+           lambda = LamList[ii];    // Lambda in meters
            k0 = 2*pi*1e-6/lambda;  // k0 in inverse microns - verified
            w=2*pi*c/lambda;        // angular frequency 
  
-           epsbg = creal(alumina_ald[i]*alumina_ald[i]);
+           epsbg = creal(alumina_ald[ii]*alumina_ald[ii]);
 
-           double complex epsald  = w_sub[i];
+           double complex epsald  = w_sub[ii];
 
            // Alloy superstrate Layer (Layer 1 in the structure [Layer 0 is air!])
            MaxwellGarnett(vf1, epsbg, epsald, &eta, &kappa);
@@ -253,10 +278,10 @@ int main(int argc, char* argv[]) {
            rind[1] = eta + I*kappa; 
 
            // Alumina layer
-           rind[Nlayer-3] = alumina_ald[i];
+           rind[Nlayer-3] = alumina_ald[ii];
 
            // W substrate layer (Layer N-2 in the structure [layer N-1 is air!])
-           MaxwellGarnett(1.0, epsbg, w_sub[i], &eta, &kappa);
+           MaxwellGarnett(1.0, epsbg, w_sub[ii], &eta, &kappa);
            rind[Nlayer-2] = eta + I*kappa;
  
            // Solve the Transfer Matrix Equations
@@ -280,7 +305,7 @@ int main(int argc, char* argv[]) {
            A = 1 - R - T;
  
            // Store absorbance/emissivity in array Emiss
-           Emiss[i] = A;
+           Emiss[ii] = A;
  
  
          }
@@ -288,15 +313,15 @@ int main(int argc, char* argv[]) {
          double SE = SpectralEfficiency_ABS(Emiss, NumLam, LamList, lbg, Temp, &PU);
          printf("  %f  %f  %f    %8.6f    %8.6f    %8.6f %f    %i     %12.10f  %12.10e\n",
                  dalloy,fac1, fac2, d1*fac1, d2*fac2, vf1,  Temp, Nlayer, SE,     PU);
-         SEA[TK*numVf*numFac*numFac+F1*numFac*numFac+F2*numFac+NI] = SE;
-         SDA[TK*numVf*numFac*numFac+F1*numFac*numFac+F2*numFac+NI] = PU;
+         SEA[i*dnum*dnum*dnum+j*dnum*dnum+k*dnum+l] = SE;
+         SDA[i*dnum*dnum*dnum+j*dnum*dnum+k*dnum+l] = PU;
 
        }
      }
    }
  }
 
-
+  exit(0);
   FILE *pf;
   pf = fopen("paretto_Bruggenman.txt","w");
   int id;
@@ -538,7 +563,6 @@ void CMatMult2x2(int Aidx, double complex *A, int Bidx, double complex *B, int C
 
 }
 
-
 double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg, double T, double *P){
     int i;
     double dlambda, sumD, sumN;
@@ -546,16 +570,15 @@ double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg,
     double h = 6.626e-34;
     double kb = 1.38064852e-23;
     double rho;
-   
 
-    sumD = 0.;
-    sumN = 0.;
+    sumD = 0;
+    sumN = 0;
 
     for (i=1; i<N-1; i++) {
 
       em = emissivity[i];
       l = lambda[i];
-      rho = (2*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T))-1));
+      rho = (4*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T))-1));
 
       dlambda = fabs((lambda[i+1]- lambda[i-1])/(2));
       sumD += em*rho*dlambda;
@@ -570,45 +593,6 @@ double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg,
     *P = sumN;
  
     return sumN/sumD;
-
-}
-
-double SpectralEfficiency_ABS(double *emissivity, int N, double *lambda, double lbg, double T, double *P){
-    int i;
-    double dlambda, sumD, sumN;
-    double l, em;
-    double h = 6.626e-34;
-    double kb = 1.38064852e-23;
-
-    double Fac = 0.0094810400;
-    double rho1, rho2;
-
-    double solar = 0.;
-    double absorber = 0.;
-    double emitter = 0.;
-
-    double T1 = 5780;
-    double T2 = 1073;
-
-    for (i=1; i<N-1; i++) {
-
-      em = emissivity[i];
-      l = lambda[i];
-      rho1 = Fac*(2*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T1))-1));
-      rho2 =     (2*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T2))-1));
-
-      dlambda = fabs((lambda[i+1]- lambda[i-1])/(2));
-
-      absorber += em*rho1*dlambda;
-      emitter  += em*rho2*dlambda;
-      solar    += rho1*dlambda;
-
-    }
-
-    // should be absorbed power in W/cm^2
-    *P = absorber/(100.*100.);;
-
-    return (absorber - emitter)/solar;
 
 }
 
@@ -685,7 +669,7 @@ int ReadDielectric(char *file, double *lambda, double complex *epsM) {
      i++;
    }
 
-   printf("#  There are %i elements in file %s\n",i,file);
+   //printf("#  There are %i elements in file %s\n",i,file);
    fflush(stdout);
    return i;
    fclose(fp);
@@ -767,3 +751,42 @@ int IsDominated(int idx, int LENGTH, double *O1,double *O2) {
   return rval;
 }
 
+
+double SpectralEfficiency_ABS(double *emissivity, int N, double *lambda, double lbg, double T, double *P){
+    int i;
+    double dlambda, sumD, sumN;
+    double l, em;
+    double h = 6.626e-34;
+    double kb = 1.38064852e-23;
+
+    double Fac = 0.0094810400;
+    double rho1, rho2;
+
+    double solar = 0.;
+    double absorber = 0.;
+    double emitter = 0.;
+
+    double T1 = 5780;
+    double T2 = 1073;
+
+    for (i=1; i<N-1; i++) {
+
+      em = emissivity[i];
+      l = lambda[i];
+      rho1 = Fac*(2*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T1))-1));
+      rho2 =     (2*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T2))-1));
+
+      dlambda = fabs((lambda[i+1]- lambda[i-1])/(2));
+
+      absorber += em*rho1*dlambda;
+      emitter  += em*rho2*dlambda;
+      solar    += rho1*dlambda;
+
+    }
+
+    // should be absorbed power in W/cm^2
+    *P = absorber/(100.*100.);;
+    
+    return (absorber - emitter)/solar;
+
+}
