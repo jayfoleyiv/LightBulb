@@ -9,6 +9,7 @@ PLOT folder contains software that will plot the thermal emission spectrum of a 
 - To remotely log on to corin, type
 `ssh shivi@149.151.162.35`
 - Enter password when prompted
-`git clone 
+`git clone https://github.com/jayfoleyiv/LightBulb.git`
+
 
 
