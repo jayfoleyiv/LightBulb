@@ -1,0 +1,8 @@
+  SPECS OF OPTIMUM STRUCTURE!
+  Number of Layers:         6
+  Number of BR layers:      1
+  Volume Fraction of Alloy: 0.489796
+  Thickness of MgO Layer:   0.050000
+  Thickness of ZrO2 Layer:  0.050000
+  Spectral Efficiency:      0.768102
+  Absorbed Power (W/cm^2)   40.963603
