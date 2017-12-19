@@ -215,16 +215,20 @@ int main(int argc, char* argv[]) {
 
           // Vector to store the thicknesses in micrometers of each layer
           d[0] = 0.;
-
-          d[1] = dalloy;
-
           // Refractive index of air
           rind[0] = 1.00 + 0.*I;
 
-          rind[1] = 1.00 + 0.*I;
+          // Make layer 1 d1 and nlow
+          d[1] = fac1;
+          rind[1] = nlow + 0.*I;
+          d[2] = fac2;
+          rind[2] = nhi + 0.*I;
+          // Layer 2 is the alloy
+          d[3] = dalloy;
+          rind[3] = 1.00 + 0.*I;
 
           // Now start the Bragg Reflector
-          for (int ii=2; ii<Nlayer-3; ii++) {
+          for (int ii=4; ii<Nlayer-3; ii++) {
 
             if (ii%2==0) {
               d[ii] = fac1;
@@ -268,7 +272,7 @@ int main(int argc, char* argv[]) {
            // Alloy superstrate Layer (Layer 1 in the structure [Layer 0 is air!])
            MaxwellGarnett(vf1, epsbg, epsald, &eta, &kappa);
            //Bruggenman(vf1,epsbg, epsald, &eta, &kappa);
-           rind[1] = eta + I*kappa; 
+           rind[3] = eta + I*kappa; 
 
            // Alumina layer
            rind[Nlayer-3] = alumina_ald[ii];
@@ -329,8 +333,11 @@ int main(int argc, char* argv[]) {
   fprintf(pf,"  Number of Layers:         %i\n",Nopt);
   fprintf(pf,"  Number of BR layers:      %i\n",Nopt-5);
   fprintf(pf,"  Volume Fraction of Alloy: %f\n",vf_opt);
+  fprintf(pf,"  Thickness of Alloy:       %f\n",dalloy);
   fprintf(pf,"  Thickness of MgO Layer:   %f\n",d1opt);
+  fprintf(pf,"  RI of MgO Layer:          %f\n",nlow);
   fprintf(pf,"  Thickness of ZrO2 Layer:  %f\n",d2opt);
+  fprintf(pf,"  RI of ZrO2 Layer:         %f\n",nhi);
   fprintf(pf,"  Spectral Efficiency:      %f\n",SE_Max);
   fprintf(pf,"  Absorbed Power (W/cm^2)   %f\n",PU_opt); 
   /*

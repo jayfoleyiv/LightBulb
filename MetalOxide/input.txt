@@ -1,0 +1,15 @@
+Nmin_Nmax
+5 10
+d1min_d1max            
+0.1  0.3
+d2min_d2max
+0.1  0.3
+vfmin_vfmax
+0.0 1.0
+Tmin_Tmax
+1000 1700
+FilePrefix
+Rh_Alumina
+AbsorberFileName
+DIEL/Rh_Spline.txt
+
