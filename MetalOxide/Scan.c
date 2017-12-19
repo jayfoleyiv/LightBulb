@@ -692,10 +692,15 @@ double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg,
     int i;
     double dlambda, sumD, sumN;
     double l, em;
+    // Variable for Photopic luminosity function
+    double PL, A, sig, l0;
     double h = 6.626e-34;
     double kb = 1.38064852e-23;
     double rho;
 
+    A = 1.126e-7;
+    sig = 4.389e-8;
+    l0 = 5.601e-7;
     sumD = 0;
     sumN = 0;
 
@@ -703,21 +708,24 @@ double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg,
 
       em = emissivity[i];
       l = lambda[i];
+      // Evaluate photopic luminosity function at this particular lambda
+      PL = A/sqrt(2*pi*sig*sig) * exp(-(l-l0)*(l-l0)/(2*sig*sig));
       rho = (2.*pi*h*c*c/pow(l,5))*(1/(exp(h*c/(l*kb*T))-1));
 
       dlambda = fabs((lambda[i+1]- lambda[i-1])/(2));
+
+      // Total emitted power
       sumD += em*rho*dlambda;
 
-      if (l<=lbg) {
+      // Overlap of thermal emission spectrum with photopic luminosity function
+      sumN += PL*em*rho*dlambda;
 
-        sumN += (l/lbg)*em*rho*dlambda;
-
-      }
     }
 
     *P = sumN;
  
-    return sumN/sumD;
+    // Luminous Efficacy in Lumens/watt
+    return 683*sumN/sumD;
 
 }
 
