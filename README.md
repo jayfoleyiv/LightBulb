@@ -1,8 +1,20 @@
 # I. Protocol for Running Pareto Scans and Plotting Results
 
+### Establish remote connection to corin from your computer
+- If using Windows, open a new PuTTY session, enter shivi@149.151.162.35 in the hostname field and click 'Open'.  If prompted with a question, select "Yes".  Enter password when prompted.
+- If using a Mac, you can follow this video tutorial: https://www.youtube.com/watch?v=DpgQe_j371E&feature=youtu.be 
+
+### Clone github repository (first time only)
+- To clone github repository, type
+
+`git clone https://github.com/jayfoleyiv/LightBulb`
+
+- To change into the LightBulb directory, type
+`cd LightBulb`
+
 ## The following instructions use the noble metal-oxide system as an example (see system 3 under II. Notes on Different Systems)
 
-- Change directories to the MetalOxide folder
+- Change directories to the MetalOxide folder (from within the LightBulb folder)
 
 `cd MetalOxide`
 
